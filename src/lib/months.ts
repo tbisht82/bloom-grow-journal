@@ -143,5 +143,5 @@ export const months: MonthEntry[] = [
   },
 ];
 
-export const DUE_DATE = new Date("2027-08-06T00:00:00");
+export const DUE_DATE = new Date("2026-08-06T00:00:00");
 export const PARENTS = { one: "Shodhika", two: "Tilak" };
