@@ -3,6 +3,9 @@ import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef } from "react";
 import { Countdown } from "@/components/Countdown";
 import { MonthCard } from "@/components/MonthCard";
+import { DueDateEditor } from "@/components/DueDateEditor";
+import { Trackers } from "@/components/Trackers";
+import { Planning } from "@/components/Planning";
 import { DUE_DATE, PARENTS, months } from "@/lib/months";
 import heroFloral from "@/assets/hero-floral.jpg";
 import floralCorner from "@/assets/floral-corner.png";
@@ -48,13 +51,6 @@ function AnimatedHeading({ text, className }: { text: string; className?: string
 }
 
 function Home() {
-  const dueString = DUE_DATE.toLocaleDateString("en-US", {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-
   const heroRef = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
   const heroY = useTransform(scrollYProgress, [0, 1], [0, 120]);
@@ -149,14 +145,13 @@ function Home() {
           <span className="h-px flex-1 bg-border" />
         </motion.div>
 
-        <motion.p
+        <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 1.4, duration: 0.8 }}
-          className="mt-6 font-display text-2xl italic text-foreground/80 sm:text-3xl"
         >
-          {dueString}
-        </motion.p>
+          <DueDateEditor />
+        </motion.div>
 
         <div className="mt-12">
           <Countdown />
