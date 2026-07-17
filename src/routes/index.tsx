@@ -215,6 +215,11 @@ function Home() {
         </div>
       </section>
 
+      <Trackers />
+      <Planning />
+
+
+
       {/* Footer */}
       <footer className="border-t border-border/60 bg-card/40 backdrop-blur-sm">
         <motion.div
