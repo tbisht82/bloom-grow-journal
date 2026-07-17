@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { DUE_DATE } from "@/lib/months";
+import { useDueDate } from "@/lib/useDueDate";
 
 function diff(target: Date) {
   const now = new Date();
@@ -43,11 +43,13 @@ function Tile({ value, label, delay }: { value: number; label: string; delay: nu
 }
 
 export function Countdown() {
-  const [t, setT] = useState(() => diff(DUE_DATE));
+  const { date } = useDueDate();
+  const [t, setT] = useState(() => diff(date));
   useEffect(() => {
-    const i = setInterval(() => setT(diff(DUE_DATE)), 1000);
+    setT(diff(date));
+    const i = setInterval(() => setT(diff(date)), 1000);
     return () => clearInterval(i);
-  }, []);
+  }, [date]);
 
   const items = [
     { label: "weeks", value: t.weeks },
