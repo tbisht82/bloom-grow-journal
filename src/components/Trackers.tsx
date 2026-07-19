@@ -256,6 +256,48 @@ function KickCounter() {
   );
 }
 
+function WeightHistory({ entries }: { entries: WeightLog[] }) {
+  const sorted = useMemo(
+    () => [...entries].sort((a, b) => b.logged_at.localeCompare(a.logged_at)),
+    [entries]
+  );
+
+  if (sorted.length === 0) {
+    return (
+      <p className="rounded-xl border border-border/40 bg-card/40 px-3 py-4 text-center text-xs italic text-muted-foreground">
+        No entries yet — log your first weight to begin.
+      </p>
+    );
+  }
+
+  return (
+    <div className="max-h-44 overflow-y-auto rounded-xl border border-border/40 bg-card/40 p-2">
+      <ul className="space-y-1">
+        <AnimatePresence initial={false}>
+          {sorted.map((e) => (
+            <motion.li
+              key={e.id}
+              layout
+              initial={{ opacity: 0, x: 8 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="flex items-center justify-between rounded-lg px-3 py-1.5 text-sm transition hover:bg-secondary/40"
+            >
+              <span className="text-muted-foreground">
+                {new Date(e.logged_at).toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                })}
+              </span>
+              <span className="font-display text-primary">{e.value_kg} kg</span>
+            </motion.li>
+          ))}
+        </AnimatePresence>
+      </ul>
+    </div>
+  );
+}
+
 function WeightTracker() {
   const [momEntries, setMomEntries] = useState<WeightLog[]>([]);
   const [babyEntries, setBabyEntries] = useState<WeightLog[]>([]);
@@ -293,45 +335,27 @@ function WeightTracker() {
     setError(null);
     const today = new Date().toISOString().slice(0, 10);
 
-    const existing = (kind === "mom" ? momEntries : babyEntries).find((e) => e.logged_at === today);
-    let result: WeightLog | null = null;
-    let opError: string | null = null;
-
-    if (existing) {
-      const { data, error } = await supabase
-        .from("weight_logs")
-        .update({ value_kg: n })
-        .eq("id", existing.id)
-        .select("id, kind, value_kg, logged_at")
-        .maybeSingle();
-      result = (data as WeightLog | null) ?? null;
-      opError = error?.message ?? null;
-    } else {
-      const { data, error } = await supabase
-        .from("weight_logs")
-        .insert({ kind, value_kg: n, logged_at: today })
-        .select("id, kind, value_kg, logged_at")
-        .maybeSingle();
-      result = (data as WeightLog | null) ?? null;
-      opError = error?.message ?? null;
-    }
+    const { data, error } = await supabase
+      .from("weight_logs")
+      .insert({ kind, value_kg: n, logged_at: today })
+      .select("id, kind, value_kg, logged_at")
+      .maybeSingle();
 
     setBusy(false);
-    if (opError || !result) {
-      setError(opError ?? "Couldn't save weight.");
+    if (error || !data) {
+      setError(error?.message ?? "Couldn't save weight.");
       return;
     }
+    const result = data as WeightLog;
     if (kind === "mom") {
-      setMomEntries((prev) => {
-        const without = prev.filter((e) => e.id !== result!.id);
-        return [...without, result as WeightLog].sort((a, b) => a.logged_at.localeCompare(b.logged_at));
-      });
+      setMomEntries((prev) =>
+        [...prev, result].sort((a, b) => a.logged_at.localeCompare(b.logged_at))
+      );
       setMomKg("");
     } else {
-      setBabyEntries((prev) => {
-        const without = prev.filter((e) => e.id !== result!.id);
-        return [...without, result as WeightLog].sort((a, b) => a.logged_at.localeCompare(b.logged_at));
-      });
+      setBabyEntries((prev) =>
+        [...prev, result].sort((a, b) => a.logged_at.localeCompare(b.logged_at))
+      );
       setBabyKg("");
     }
   };
@@ -397,31 +421,39 @@ function WeightTracker() {
               </div>
             )}
           </div>
-          <div className="flex flex-wrap items-end gap-3">
+          <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label className="block text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
-                Today (kg)
-              </label>
-              <input
-                type="number"
-                step="0.1"
-                value={momKg}
-                onChange={(e) => setMomKg(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && logWeight("mom", momKg)}
-                placeholder={momSorted.length ? String(momSorted[momSorted.length - 1].value_kg) : "0.0"}
-                className="mt-1 w-28 rounded-xl border border-border/60 bg-card/60 px-3 py-2 text-lg focus:outline-none focus:ring-2 focus:ring-primary/30"
-              />
+              <div className="flex flex-wrap items-end gap-3">
+                <div>
+                  <label className="block text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
+                    Today (kg)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    value={momKg}
+                    onChange={(e) => setMomKg(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && logWeight("mom", momKg)}
+                    placeholder={momSorted.length ? String(momSorted[momSorted.length - 1].value_kg) : "0.0"}
+                    className="mt-1 w-28 rounded-xl border border-border/60 bg-card/60 px-3 py-2 text-lg focus:outline-none focus:ring-2 focus:ring-primary/30"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => logWeight("mom", momKg)}
+                  disabled={busy || !momKg}
+                  className="rounded-full bg-primary/90 px-5 py-2 text-xs uppercase tracking-[0.25em] text-primary-foreground shadow-sm transition hover:bg-primary disabled:opacity-50"
+                >
+                  Log mom
+                </button>
+              </div>
+              {renderSparkline(momSorted, "oklch(0.78 0.09 25)")}
             </div>
-            <button
-              type="button"
-              onClick={() => logWeight("mom", momKg)}
-              disabled={busy || !momKg}
-              className="rounded-full bg-primary/90 px-5 py-2 text-xs uppercase tracking-[0.25em] text-primary-foreground shadow-sm transition hover:bg-primary disabled:opacity-50"
-            >
-              Log mom
-            </button>
+            <div>
+              <div className="mb-2 text-[10px] uppercase tracking-[0.25em] text-muted-foreground">History</div>
+              <WeightHistory entries={momSorted} />
+            </div>
           </div>
-          {renderSparkline(momSorted, "oklch(0.78 0.09 25)")}
         </div>
 
         {/* Baby */}
@@ -435,31 +467,39 @@ function WeightTracker() {
               </div>
             )}
           </div>
-          <div className="flex flex-wrap items-end gap-3">
+          <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label className="block text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
-                Today (kg)
-              </label>
-              <input
-                type="number"
-                step="0.01"
-                value={babyKg}
-                onChange={(e) => setBabyKg(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && logWeight("baby", babyKg)}
-                placeholder={babySorted.length ? String(babySorted[babySorted.length - 1].value_kg) : "0.00"}
-                className="mt-1 w-28 rounded-xl border border-border/60 bg-card/60 px-3 py-2 text-lg focus:outline-none focus:ring-2 focus:ring-primary/30"
-              />
+              <div className="flex flex-wrap items-end gap-3">
+                <div>
+                  <label className="block text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
+                    Today (kg)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={babyKg}
+                    onChange={(e) => setBabyKg(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && logWeight("baby", babyKg)}
+                    placeholder={babySorted.length ? String(babySorted[babySorted.length - 1].value_kg) : "0.00"}
+                    className="mt-1 w-28 rounded-xl border border-border/60 bg-card/60 px-3 py-2 text-lg focus:outline-none focus:ring-2 focus:ring-primary/30"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => logWeight("baby", babyKg)}
+                  disabled={busy || !babyKg}
+                  className="rounded-full bg-primary/90 px-5 py-2 text-xs uppercase tracking-[0.25em] text-primary-foreground shadow-sm transition hover:bg-primary disabled:opacity-50"
+                >
+                  Log baby
+                </button>
+              </div>
+              {renderSparkline(babySorted, "oklch(0.78 0.06 200)")}
             </div>
-            <button
-              type="button"
-              onClick={() => logWeight("baby", babyKg)}
-              disabled={busy || !babyKg}
-              className="rounded-full bg-primary/90 px-5 py-2 text-xs uppercase tracking-[0.25em] text-primary-foreground shadow-sm transition hover:bg-primary disabled:opacity-50"
-            >
-              Log baby
-            </button>
+            <div>
+              <div className="mb-2 text-[10px] uppercase tracking-[0.25em] text-muted-foreground">History</div>
+              <WeightHistory entries={babySorted} />
+            </div>
           </div>
-          {renderSparkline(babySorted, "oklch(0.78 0.06 200)")}
         </div>
       </div>
 
