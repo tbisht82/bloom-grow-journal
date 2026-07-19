@@ -1,7 +1,8 @@
 import { useSyncExternalStore } from "react";
 import { DUE_DATE } from "@/lib/months";
+import { supabase } from "@/lib/supabase";
 
-const KEY = "journal.dueDate";
+const KEY = "due_date";
 const DEFAULT_ISO = DUE_DATE.toISOString().slice(0, 10);
 
 type Store = { iso: string; hydrated: boolean };
@@ -11,18 +12,30 @@ const SERVER_SNAPSHOT: Store = { iso: DEFAULT_ISO, hydrated: false };
 let store: Store = SERVER_SNAPSHOT;
 const listeners = new Set<() => void>();
 
+function emit() {
+  for (const l of listeners) l();
+}
+
+function setStore(next: Store) {
+  store = next;
+  emit();
+}
+
+let booted = false;
+async function boot() {
+  if (booted) return;
+  booted = true;
+  const { data } = await supabase
+    .from("app_settings")
+    .select("value")
+    .eq("key", KEY)
+    .maybeSingle();
+  const iso = data?.value ?? DEFAULT_ISO;
+  setStore({ iso, hydrated: true });
+}
+
 if (typeof window !== "undefined") {
-  let iso = DEFAULT_ISO;
-  try {
-    const raw = localStorage.getItem(KEY);
-    if (raw !== null) {
-      const parsed = JSON.parse(raw);
-      if (typeof parsed === "string") iso = parsed;
-    }
-  } catch {
-    /* ignore */
-  }
-  store = { iso, hydrated: true };
+  void boot();
 }
 
 function subscribe(listener: () => void) {
@@ -30,10 +43,6 @@ function subscribe(listener: () => void) {
   return () => {
     listeners.delete(listener);
   };
-}
-
-function emit() {
-  for (const l of listeners) l();
 }
 
 export function useDueDate() {
@@ -45,15 +54,13 @@ export function useDueDate() {
 
   const date = new Date(`${snapshot.iso}T00:00:00`);
 
-  const setIso = (next: string) => {
+  const setIso = async (next: string) => {
     if (next === store.iso) return;
-    store = { iso: next, hydrated: store.hydrated };
-    try {
-      localStorage.setItem(KEY, JSON.stringify(next));
-    } catch {
-      /* ignore */
-    }
-    emit();
+    setStore({ iso: next, hydrated: store.hydrated });
+    await supabase
+      .from("app_settings")
+      .upsert({ key: KEY, value: next, updated_at: new Date().toISOString() })
+      .eq("key", KEY);
   };
 
   return {
