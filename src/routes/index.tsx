@@ -6,8 +6,12 @@ import { MonthCard } from "@/components/MonthCard";
 import { DueDateEditor } from "@/components/DueDateEditor";
 import { Trackers } from "@/components/Trackers";
 import { Planning } from "@/components/Planning";
+import { Guestbook } from "@/components/Guestbook";
+import { MemoryWall } from "@/components/MemoryWall";
 import { DUE_DATE, PARENTS, months } from "@/lib/months";
-import floralCorner from "@/assets/floral-corner.png";
+import sketchCorner from "@/assets/sketch-corner.png";
+import sketchBranch from "@/assets/sketch-branch.png";
+import sketchMark from "@/assets/sketch-mark.png";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -16,12 +20,12 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "A soft, tender pregnancy journal — nine months of growing, waiting, and loving. Countdown, milestones, memories.",
+          "A soft, sage-toned pregnancy journal — nine months of growing, waiting, and loving. Countdown, memories, and messages from the people we love.",
       },
       { property: "og:title", content: `${PARENTS.one} & ${PARENTS.two} — Pregnancy Journal` },
       {
         property: "og:description",
-        content: "Nine months of milestones, cravings, appointments, and memories.",
+        content: "Nine months of milestones, cravings, appointments, memories, and love notes.",
       },
     ],
   }),
@@ -49,11 +53,40 @@ function AnimatedHeading({ text, className }: { text: string; className?: string
   );
 }
 
+// Falling leaf/petal shape as SVG (sage green)
+function LeafPetal({ i }: { i: number }) {
+  const startX = (i * 17) % 100;
+  const drift = i % 2 ? 10 : -10;
+  const duration = 22 + (i % 5) * 4;
+  return (
+    <motion.svg
+      aria-hidden
+      viewBox="0 0 20 30"
+      initial={{ y: "-10vh", x: `${startX}vw`, opacity: 0, rotate: 0 }}
+      animate={{
+        y: ["-10vh", "110vh"],
+        x: [`${startX}vw`, `${startX + drift}vw`, `${startX - drift / 2}vw`, `${startX + drift}vw`],
+        opacity: [0, 0.55, 0.55, 0],
+        rotate: [0, 220, 360],
+      }}
+      transition={{ duration, repeat: Infinity, delay: i * 2.4, ease: "linear" }}
+      className="pointer-events-none absolute top-0 h-4 w-3 text-primary/60"
+    >
+      <path
+        d="M10 1 C 3 8, 3 22, 10 29 C 17 22, 17 8, 10 1 Z"
+        fill="currentColor"
+        opacity="0.7"
+      />
+      <path d="M10 3 L10 27" stroke="currentColor" strokeWidth="0.5" opacity="0.8" />
+    </motion.svg>
+  );
+}
+
 function Home() {
   const heroRef = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
-  const heroY = useTransform(scrollYProgress, [0, 1], [0, 120]);
-  const heroOpacity = useTransform(scrollYProgress, [0, 1], [1, 0.3]);
+  const heroY = useTransform(scrollYProgress, [0, 1], [0, 80]);
+  const heroOpacity = useTransform(scrollYProgress, [0, 1], [1, 0.4]);
 
   const timelineRef = useRef<HTMLElement>(null);
   const { scrollYProgress: lineProgress } = useScroll({
@@ -63,111 +96,163 @@ function Home() {
 
   return (
     <main className="relative overflow-hidden">
-      {/* Floating decorative florals */}
+      {/* Corner sketches */}
       <motion.img
-        src={floralCorner}
+        src={sketchCorner}
         alt=""
         aria-hidden
-        animate={{ y: [0, -14, 0], rotate: [200, 205, 200] }}
-        transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
-        className="pointer-events-none absolute -left-24 -top-16 w-64 opacity-70 sm:w-96"
+        loading="eager"
+        animate={{ y: [0, -10, 0], rotate: [0, 2, 0] }}
+        transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+        className="pointer-events-none absolute -left-16 -top-10 w-56 opacity-70 sm:w-80"
       />
       <motion.img
-        src={floralCorner}
+        src={sketchCorner}
         alt=""
         aria-hidden
-        animate={{ y: [0, 18, 0], rotate: [0, -3, 0] }}
-        transition={{ duration: 11, repeat: Infinity, ease: "easeInOut" }}
-        className="pointer-events-none absolute -right-24 top-[40vh] w-56 opacity-60 sm:w-80"
-      />
-      <motion.img
-        src={floralCorner}
-        alt=""
-        aria-hidden
-        animate={{ y: [0, -20, 0], rotate: [90, 95, 90] }}
-        transition={{ duration: 13, repeat: Infinity, ease: "easeInOut" }}
-        className="pointer-events-none absolute -left-16 top-[120vh] hidden w-72 opacity-50 md:block"
+        animate={{ y: [0, 12, 0], rotate: [180, 178, 180] }}
+        transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
+        className="pointer-events-none absolute -right-24 top-[60vh] w-56 opacity-60 sm:w-72"
       />
 
-      {/* Floating petals */}
-      {Array.from({ length: 8 }).map((_, i) => (
-        <motion.div
-          key={i}
-          aria-hidden
-          initial={{ y: -20, x: `${(i * 13) % 100}vw`, opacity: 0 }}
-          animate={{
-            y: ["0vh", "110vh"],
-            x: [`${(i * 13) % 100}vw`, `${((i * 13) % 100) + (i % 2 ? 8 : -8)}vw`],
-            opacity: [0, 0.6, 0.6, 0],
-            rotate: [0, 360],
-          }}
-          transition={{
-            duration: 18 + (i % 4) * 4,
-            repeat: Infinity,
-            delay: i * 2.2,
-            ease: "linear",
-          }}
-          className="pointer-events-none absolute top-0 h-3 w-3 rounded-full bg-gradient-to-br from-[oklch(0.9_0.06_25)] to-[oklch(0.85_0.08_20)] shadow-sm"
-        />
+      {/* Floating leaves */}
+      {Array.from({ length: 10 }).map((_, i) => (
+        <LeafPetal key={i} i={i} />
       ))}
 
-      {/* Hero */}
+      {/* HERO — bento grid */}
       <motion.section
         ref={heroRef}
         style={{ y: heroY, opacity: heroOpacity }}
-        className="relative mx-auto max-w-5xl px-6 pb-16 pt-20 text-center sm:pt-28"
+        className="relative mx-auto max-w-6xl px-4 pb-16 pt-14 sm:px-6 sm:pt-24"
       >
         <motion.p
           initial={{ opacity: 0, letterSpacing: "0.1em" }}
           animate={{ opacity: 1, letterSpacing: "0.4em" }}
           transition={{ duration: 1.2, ease: "easeOut" }}
-          className="mb-6 text-[11px] uppercase text-muted-foreground"
+          className="mb-6 text-center text-[11px] uppercase text-muted-foreground"
         >
           A journal for our little one
         </motion.p>
 
-        <AnimatedHeading
-          text={`${PARENTS.one} & ${PARENTS.two}`}
-          className="font-display text-5xl leading-[1.05] text-foreground sm:text-7xl md:text-8xl"
-        />
-
-        <motion.div
-          initial={{ opacity: 0, scaleX: 0 }}
-          animate={{ opacity: 1, scaleX: 1 }}
-          transition={{ delay: 1.2, duration: 1, ease: "easeOut" }}
-          className="mx-auto mt-8 flex max-w-md items-center gap-4"
-        >
-          <span className="h-px flex-1 bg-border" />
-          <span className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
-            expecting
-          </span>
-          <span className="h-px flex-1 bg-border" />
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 1.4, duration: 0.8 }}
-        >
-          <DueDateEditor />
-        </motion.div>
-
-        <div className="mt-12">
-          <Countdown />
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 2, duration: 1 }}
-            className="mt-4 text-xs uppercase tracking-[0.25em] text-muted-foreground"
+        <div className="grid auto-rows-[minmax(150px,auto)] grid-cols-6 gap-3 sm:gap-4">
+          {/* Names card — spans wide */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+            className="relative col-span-6 flex flex-col items-center justify-center overflow-hidden rounded-[2rem] border border-border/60 bg-card/75 p-8 shadow-[var(--shadow-leaf)] backdrop-blur-sm sm:p-12 md:col-span-4 md:row-span-2"
           >
-            until we meet you
-          </motion.p>
-        </div>
+            <img
+              src={sketchBranch}
+              alt=""
+              aria-hidden
+              className="pointer-events-none absolute -right-8 -top-4 w-56 opacity-60"
+            />
+            <AnimatedHeading
+              text={`${PARENTS.one} & ${PARENTS.two}`}
+              className="text-center font-display text-4xl leading-[1.05] text-foreground sm:text-6xl md:text-7xl"
+            />
+            <motion.div
+              initial={{ opacity: 0, scaleX: 0 }}
+              animate={{ opacity: 1, scaleX: 1 }}
+              transition={{ delay: 1.1, duration: 1, ease: "easeOut" }}
+              className="mx-auto mt-6 flex w-full max-w-sm items-center gap-3"
+            >
+              <span className="h-px flex-1 bg-border" />
+              <span className="text-[10px] uppercase tracking-[0.35em] text-muted-foreground">
+                expecting
+              </span>
+              <span className="h-px flex-1 bg-border" />
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 1.3, duration: 0.7 }}
+              className="mt-6"
+            >
+              <DueDateEditor />
+            </motion.div>
+          </motion.div>
 
+          {/* Little mark card */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5, duration: 0.7 }}
+            className="col-span-3 flex flex-col items-center justify-center rounded-[2rem] border border-border/60 bg-gradient-to-br from-secondary/60 to-accent/40 p-5 text-center shadow-[var(--shadow-leaf)] md:col-span-2"
+          >
+            <motion.img
+              src={sketchMark}
+              alt=""
+              aria-hidden
+              animate={{ rotate: [0, 4, -4, 0] }}
+              transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+              className="h-20 w-20 object-contain"
+            />
+            <p className="mt-2 font-display text-lg italic text-foreground/80">
+              a tiny heartbeat
+            </p>
+            <p className="mt-1 text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
+              growing every day
+            </p>
+          </motion.div>
+
+          {/* Season / quote card */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6, duration: 0.7 }}
+            className="col-span-3 flex flex-col justify-between rounded-[2rem] border border-border/60 bg-card/70 p-5 shadow-[var(--shadow-leaf)] backdrop-blur-sm md:col-span-2"
+          >
+            <span className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
+              this season
+            </span>
+            <p className="font-display text-xl italic leading-snug text-foreground/85">
+              “Everything we love, we're growing quietly, one day at a time.”
+            </p>
+          </motion.div>
+
+          {/* Countdown — wide bottom card */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.7, duration: 0.7 }}
+            className="col-span-6 flex flex-col items-center justify-center rounded-[2rem] border border-border/60 bg-gradient-to-br from-card/90 to-secondary/40 p-6 shadow-[var(--shadow-leaf)] backdrop-blur-sm sm:p-8"
+          >
+            <span className="mb-4 text-[10px] uppercase tracking-[0.35em] text-muted-foreground">
+              until we meet you
+            </span>
+            <Countdown />
+          </motion.div>
+
+          {/* Quick nav cards */}
+          {[
+            { href: "#timeline", label: "Nine Months", hint: "the timeline" },
+            { href: "#memories", label: "Memory Wall", hint: "photos & scans" },
+            { href: "#guestbook", label: "Guestbook", hint: "notes from our people" },
+          ].map((c, i) => (
+            <motion.a
+              key={c.href}
+              href={c.href}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.9 + i * 0.1, duration: 0.6 }}
+              whileHover={{ y: -4 }}
+              className="col-span-2 flex flex-col justify-between rounded-2xl border border-border/60 bg-card/70 p-4 shadow-[var(--shadow-leaf)] backdrop-blur-sm transition hover:border-primary/60"
+            >
+              <span className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
+                {c.hint}
+              </span>
+              <span className="mt-2 font-display text-xl text-foreground">{c.label}</span>
+            </motion.a>
+          ))}
+        </div>
       </motion.section>
 
       {/* Timeline intro */}
       <motion.section
+        id="timeline"
         initial={{ opacity: 0, y: 30 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, margin: "-100px" }}
@@ -189,8 +274,7 @@ function Home() {
       </motion.section>
 
       {/* Timeline */}
-      <section ref={timelineRef} className="relative mx-auto max-w-6xl px-6 pb-32">
-        {/* animated growing line */}
+      <section ref={timelineRef} className="relative mx-auto max-w-6xl px-6 pb-24">
         <div className="absolute left-1/2 top-0 hidden h-full w-px -translate-x-1/2 bg-border/40 md:block" />
         <motion.div
           style={{ scaleY: lineProgress }}
@@ -204,10 +288,10 @@ function Home() {
         </div>
       </section>
 
+      <MemoryWall />
+      <Guestbook />
       <Trackers />
       <Planning />
-
-
 
       {/* Footer */}
       <footer className="border-t border-border/60 bg-card/40 backdrop-blur-sm">
