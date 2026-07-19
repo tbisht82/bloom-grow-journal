@@ -312,6 +312,8 @@ function WeightTracker() {
   const [error, setError] = useState<string | null>(null);
   const [momKg, setMomKg] = useState("");
   const [babyKg, setBabyKg] = useState("");
+  const [momDate, setMomDate] = useState(new Date().toISOString().slice(0, 10));
+  const [babyDate, setBabyDate] = useState(new Date().toISOString().slice(0, 10));
   const { isAdmin } = useAuth();
 
   const load = useCallback(async () => {
@@ -335,16 +337,16 @@ function WeightTracker() {
     load();
   }, [load]);
 
-  const logWeight = async (kind: "mom" | "baby", value: string) => {
+  const logWeight = async (kind: "mom" | "baby", value: string, date: string) => {
     const n = parseFloat(value);
     if (!Number.isFinite(n) || n <= 0) return;
     setBusy(true);
     setError(null);
-    const today = new Date().toISOString().slice(0, 10);
+    const safeDate = date || new Date().toISOString().slice(0, 10);
 
     const { data, error } = await supabase
       .from("weight_logs")
-      .insert({ kind, value_kg: n, logged_at: today })
+      .insert({ kind, value_kg: n, logged_at: safeDate })
       .select("id, kind, value_kg, logged_at")
       .maybeSingle();
 
@@ -433,23 +435,36 @@ function WeightTracker() {
               <div className="flex flex-wrap items-end gap-3">
                 <div>
                   <label className="block text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
-                    Today (kg)
+                    {isAdmin ? "Weight (kg)" : "Today (kg)"}
                   </label>
                   <input
                     type="number"
                     step="0.1"
                     value={momKg}
                     onChange={(e) => setMomKg(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && logWeight("mom", momKg)}
+                    onKeyDown={(e) => e.key === "Enter" && logWeight("mom", momKg, momDate)}
                     disabled={!isAdmin}
                     placeholder={momSorted.length ? String(momSorted[momSorted.length - 1].value_kg) : "0.0"}
                     className="mt-1 w-28 rounded-xl border border-border/60 bg-card/60 px-3 py-2 text-lg focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-60"
                   />
                 </div>
                 {isAdmin && (
+                  <div>
+                    <label className="block text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
+                      Date
+                    </label>
+                    <input
+                      type="date"
+                      value={momDate}
+                      onChange={(e) => setMomDate(e.target.value)}
+                      className="mt-1 w-36 rounded-xl border border-border/60 bg-card/60 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                    />
+                  </div>
+                )}
+                {isAdmin && (
                   <button
                     type="button"
-                    onClick={() => logWeight("mom", momKg)}
+                    onClick={() => logWeight("mom", momKg, momDate)}
                     disabled={busy || !momKg}
                     className="rounded-full bg-primary/90 px-5 py-2 text-xs uppercase tracking-[0.25em] text-primary-foreground shadow-sm transition hover:bg-primary disabled:opacity-50"
                   >
@@ -482,23 +497,36 @@ function WeightTracker() {
               <div className="flex flex-wrap items-end gap-3">
                 <div>
                   <label className="block text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
-                    Today (kg)
+                    {isAdmin ? "Weight (kg)" : "Today (kg)"}
                   </label>
                   <input
                     type="number"
                     step="0.01"
                     value={babyKg}
                     onChange={(e) => setBabyKg(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && logWeight("baby", babyKg)}
+                    onKeyDown={(e) => e.key === "Enter" && logWeight("baby", babyKg, babyDate)}
                     disabled={!isAdmin}
                     placeholder={babySorted.length ? String(babySorted[babySorted.length - 1].value_kg) : "0.00"}
                     className="mt-1 w-28 rounded-xl border border-border/60 bg-card/60 px-3 py-2 text-lg focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-60"
                   />
                 </div>
                 {isAdmin && (
+                  <div>
+                    <label className="block text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
+                      Date
+                    </label>
+                    <input
+                      type="date"
+                      value={babyDate}
+                      onChange={(e) => setBabyDate(e.target.value)}
+                      className="mt-1 w-36 rounded-xl border border-border/60 bg-card/60 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                    />
+                  </div>
+                )}
+                {isAdmin && (
                   <button
                     type="button"
-                    onClick={() => logWeight("baby", babyKg)}
+                    onClick={() => logWeight("baby", babyKg, babyDate)}
                     disabled={busy || !babyKg}
                     className="rounded-full bg-primary/90 px-5 py-2 text-xs uppercase tracking-[0.25em] text-primary-foreground shadow-sm transition hover:bg-primary disabled:opacity-50"
                   >
