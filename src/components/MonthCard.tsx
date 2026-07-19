@@ -141,12 +141,16 @@ function Slot({
         onChange={onFile}
       />
       <motion.div
-        whileHover={{ scale: 1.05, borderColor: "var(--color-primary)" }}
-        whileTap={{ scale: 0.97 }}
-        className={`group relative flex h-full w-full cursor-pointer items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed transition-colors ${
-          item ? "border-transparent bg-card/40" : "border-border bg-card/40 text-muted-foreground hover:text-primary"
+        whileHover={isAdmin && !item ? { scale: 1.05, borderColor: "var(--color-primary)" } : item ? { scale: 1.02 } : {}}
+        whileTap={isAdmin && !item ? { scale: 0.97 } : {}}
+        className={`group relative flex h-full w-full items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed transition-colors ${
+          item
+            ? "border-transparent bg-card/40"
+            : isAdmin
+              ? "cursor-pointer border-border bg-card/40 text-muted-foreground hover:text-primary"
+              : "cursor-default border-border/40 bg-card/30 text-muted-foreground/70"
         }`}
-        onClick={() => (item ? setViewerOpen(true) : pickFile())}
+        onClick={() => (item ? setViewerOpen(true) : isAdmin ? pickFile() : undefined)}
       >
         {loading ? (
           <div className="h-5 w-5 animate-spin rounded-full border-2 border-muted-foreground/40 border-t-primary" />
@@ -167,11 +171,18 @@ function Slot({
               preload="metadata"
             />
           )
-        ) : (
+        ) : isAdmin ? (
           <div className="flex flex-col items-center gap-1">
             <Icon className="h-5 w-5" />
             <span className="text-[9px] uppercase tracking-[0.15em] opacity-60">
               {kind === "photo" ? "photo" : "video"}
+            </span>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center gap-1.5 px-2 text-center">
+            <Icon className="h-4 w-4 opacity-50" />
+            <span className="text-[10px] uppercase tracking-[0.2em] opacity-60">
+              Media Brewing
             </span>
           </div>
         )}
