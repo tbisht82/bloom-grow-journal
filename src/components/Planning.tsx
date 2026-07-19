@@ -1,11 +1,12 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useLocalState } from "@/lib/useLocalState";
+import { Loader as Loader2 } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
+import { useLocalState } from "@/lib/useLocalState";
 
 type Appt = { id: string; date: string; label: string };
 
-const uid = () => Math.random().toString(36).slice(2, 9);
 function Card({
   title,
   subtitle,
@@ -57,18 +58,65 @@ function BirthPlan() {
 }
 
 function Appointments() {
-  const [items, setItems] = useLocalState<Appt[]>("journal.appts", []);
+  const [items, setItems] = useState<Appt[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [date, setDate] = useState("");
   const [label, setLabel] = useState("");
   const { isAdmin } = useAuth();
 
-  const add = () => {
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    const { data, error } = await supabase
+      .from("appointments")
+      .select("id, date, label")
+      .order("date", { ascending: true });
+    setLoading(false);
+    if (error) {
+      setError(error.message);
+      return;
+    }
+    setItems((data ?? []) as Appt[]);
+  }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const add = async () => {
     if (!date || !label.trim()) return;
-    setItems((prev) => [...prev, { id: uid(), date, label: label.trim() }]);
+    setBusy(true);
+    setError(null);
+    const { data, error } = await supabase
+      .from("appointments")
+      .insert({ date, label: label.trim() })
+      .select("id, date, label")
+      .maybeSingle();
+    setBusy(false);
+    if (error || !data) {
+      setError(error?.message ?? "Couldn't save appointment.");
+      return;
+    }
+    setItems((prev) =>
+      [...prev, data as Appt].sort((a, b) => a.date.localeCompare(b.date))
+    );
     setDate("");
     setLabel("");
   };
-  const remove = (id: string) => setItems((prev) => prev.filter((x) => x.id !== id));
+
+  const remove = async (id: string) => {
+    setBusy(true);
+    setError(null);
+    const { error } = await supabase.from("appointments").delete().eq("id", id);
+    setBusy(false);
+    if (error) {
+      setError(error.message);
+      return;
+    }
+    setItems((prev) => prev.filter((x) => x.id !== id));
+  };
 
   const today = new Date().toISOString().slice(0, 10);
   const upcoming = [...items].filter((x) => x.date >= today).sort((a, b) => a.date.localeCompare(b.date));
@@ -100,7 +148,8 @@ function Appointments() {
           <button
             type="button"
             onClick={add}
-            className="rounded-full bg-primary/90 px-5 py-2 text-xs uppercase tracking-[0.25em] text-primary-foreground shadow-sm transition hover:bg-primary"
+            disabled={busy || !date || !label.trim()}
+            className="rounded-full bg-primary/90 px-5 py-2 text-xs uppercase tracking-[0.25em] text-primary-foreground shadow-sm transition hover:bg-primary disabled:opacity-50"
           >
             Add
           </button>
@@ -129,7 +178,8 @@ function Appointments() {
                   <button
                     type="button"
                     onClick={() => remove(x.id)}
-                    className="text-xs text-muted-foreground hover:text-destructive"
+                    disabled={busy}
+                    className="text-xs text-muted-foreground hover:text-destructive disabled:opacity-50"
                   >
                     ×
                   </button>
@@ -156,7 +206,8 @@ function Appointments() {
                   <button
                     type="button"
                     onClick={() => remove(x.id)}
-                    className="ml-auto text-xs hover:text-destructive"
+                    disabled={busy}
+                    className="ml-auto text-xs hover:text-destructive disabled:opacity-50"
                   >
                     ×
                   </button>
@@ -166,9 +217,22 @@ function Appointments() {
           </ul>
         </>
       )}
-      {items.length === 0 && (
+
+      {loading && (
+        <div className="mt-4 flex justify-center text-muted-foreground">
+          <Loader2 className="h-4 w-4 animate-spin" />
+        </div>
+      )}
+
+      {!loading && items.length === 0 && (
         <p className="mt-5 rounded-2xl bg-secondary/20 px-4 py-6 text-center text-sm italic text-muted-foreground">
           No appointments yet — add the next one above.
+        </p>
+      )}
+
+      {error && (
+        <p className="mt-3 rounded-xl bg-destructive/10 px-4 py-2 text-center text-sm text-destructive">
+          {error}
         </p>
       )}
     </Card>
