@@ -43,13 +43,14 @@ function Tile({ value, label, delay }: { value: number; label: string; delay: nu
 }
 
 export function Countdown() {
-  const { date } = useDueDate();
-  const [t, setT] = useState(() => diff(date));
+  const { iso } = useDueDate();
+  const [t, setT] = useState(() => diff(new Date(`${iso}T00:00:00`)));
   useEffect(() => {
+    const date = new Date(`${iso}T00:00:00`);
     setT(diff(date));
     const i = setInterval(() => setT(diff(date)), 1000);
     return () => clearInterval(i);
-  }, [date]);
+  }, [iso]);
 
   const items = [
     { label: "days", value: t.days },
