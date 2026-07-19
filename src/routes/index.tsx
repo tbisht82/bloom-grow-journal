@@ -7,7 +7,6 @@ import { DueDateEditor } from "@/components/DueDateEditor";
 import { Trackers } from "@/components/Trackers";
 import { Planning } from "@/components/Planning";
 import { DUE_DATE, PARENTS, months } from "@/lib/months";
-import heroFloral from "@/assets/hero-floral.jpg";
 import floralCorner from "@/assets/floral-corner.png";
 
 export const Route = createFileRoute("/")({
