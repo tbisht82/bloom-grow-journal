@@ -6,6 +6,8 @@ import { MonthCard } from "@/components/MonthCard";
 import { DueDateEditor } from "@/components/DueDateEditor";
 import { Trackers } from "@/components/Trackers";
 import { Planning } from "@/components/Planning";
+import { Guestbook } from "@/components/Guestbook";
+import { MemoryWall } from "@/components/MemoryWall";
 import { DUE_DATE, PARENTS, months } from "@/lib/months";
 import floralCorner from "@/assets/floral-corner.png";
 
@@ -207,7 +209,8 @@ function Home() {
       <Trackers />
       <Planning />
 
-
+      <Guestbook />
+      <MemoryWall />
 
       {/* Footer */}
       <footer className="border-t border-border/60 bg-card/40 backdrop-blur-sm">
