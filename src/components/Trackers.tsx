@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Loader as Loader2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/lib/auth";
 
 type KickSession = {
   id: string;
@@ -56,6 +57,7 @@ function KickCounter() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [, setTick] = useState(0);
+  const { isAdmin } = useAuth();
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -178,44 +180,48 @@ function KickCounter() {
         </div>
       </div>
 
-      <motion.button
-        type="button"
-        onClick={addKick}
-        disabled={busy}
-        whileTap={{ scale: 0.94 }}
-        whileHover={{ scale: 1.02 }}
-        className="mt-6 w-full rounded-2xl bg-gradient-to-br from-primary to-accent px-6 py-6 font-display text-2xl italic text-primary-foreground shadow-[var(--shadow-petal)] disabled:opacity-50"
-      >
-        I felt a kick {active ? `(${active.kicks})` : "💗"}
-      </motion.button>
+      {isAdmin && (
+        <>
+          <motion.button
+            type="button"
+            onClick={addKick}
+            disabled={busy}
+            whileTap={{ scale: 0.94 }}
+            whileHover={{ scale: 1.02 }}
+            className="mt-6 w-full rounded-2xl bg-gradient-to-br from-primary to-accent px-6 py-6 font-display text-2xl italic text-primary-foreground shadow-[var(--shadow-petal)] disabled:opacity-50"
+          >
+            I felt a kick {active ? `(${active.kicks})` : "💗"}
+          </motion.button>
 
-      {active && (
-        <p className="mt-3 text-center text-xs text-muted-foreground">
-          Session running · {active.kicks} {active.kicks === 1 ? "kick" : "kicks"} in {sessionMinutes} min
-        </p>
-      )}
-
-      {error && (
-        <p className="mt-3 rounded-xl bg-destructive/10 px-4 py-2 text-center text-sm text-destructive">
-          {error}
-        </p>
-      )}
-
-      <div className="mt-4 flex justify-between text-[11px] uppercase tracking-[0.25em] text-muted-foreground">
-        <button type="button" onClick={startSession} disabled={busy} className="hover:text-foreground disabled:opacity-50">
-          {active ? "New session" : "Start session"}
-        </button>
-        <div className="flex gap-3">
           {active && (
-            <button type="button" onClick={endSession} disabled={busy} className="hover:text-foreground disabled:opacity-50">
-              End session
-            </button>
+            <p className="mt-3 text-center text-xs text-muted-foreground">
+              Session running · {active.kicks} {active.kicks === 1 ? "kick" : "kicks"} in {sessionMinutes} min
+            </p>
           )}
-          <button type="button" onClick={resetAll} disabled={busy} className="hover:text-destructive disabled:opacity-50">
-            Reset all
-          </button>
-        </div>
-      </div>
+
+          {error && (
+            <p className="mt-3 rounded-xl bg-destructive/10 px-4 py-2 text-center text-sm text-destructive">
+              {error}
+            </p>
+          )}
+
+          <div className="mt-4 flex justify-between text-[11px] uppercase tracking-[0.25em] text-muted-foreground">
+            <button type="button" onClick={startSession} disabled={busy} className="hover:text-foreground disabled:opacity-50">
+              {active ? "New session" : "Start session"}
+            </button>
+            <div className="flex gap-3">
+              {active && (
+                <button type="button" onClick={endSession} disabled={busy} className="hover:text-foreground disabled:opacity-50">
+                  End session
+                </button>
+              )}
+              <button type="button" onClick={resetAll} disabled={busy} className="hover:text-destructive disabled:opacity-50">
+                Reset all
+              </button>
+            </div>
+          </div>
+        </>
+      )}
 
       {loading && (
         <div className="mt-4 flex justify-center text-muted-foreground">
@@ -306,6 +312,7 @@ function WeightTracker() {
   const [error, setError] = useState<string | null>(null);
   const [momKg, setMomKg] = useState("");
   const [babyKg, setBabyKg] = useState("");
+  const { isAdmin } = useAuth();
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -434,18 +441,21 @@ function WeightTracker() {
                     value={momKg}
                     onChange={(e) => setMomKg(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && logWeight("mom", momKg)}
+                    disabled={!isAdmin}
                     placeholder={momSorted.length ? String(momSorted[momSorted.length - 1].value_kg) : "0.0"}
-                    className="mt-1 w-28 rounded-xl border border-border/60 bg-card/60 px-3 py-2 text-lg focus:outline-none focus:ring-2 focus:ring-primary/30"
+                    className="mt-1 w-28 rounded-xl border border-border/60 bg-card/60 px-3 py-2 text-lg focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-60"
                   />
                 </div>
-                <button
-                  type="button"
-                  onClick={() => logWeight("mom", momKg)}
-                  disabled={busy || !momKg}
-                  className="rounded-full bg-primary/90 px-5 py-2 text-xs uppercase tracking-[0.25em] text-primary-foreground shadow-sm transition hover:bg-primary disabled:opacity-50"
-                >
-                  Log mom
-                </button>
+                {isAdmin && (
+                  <button
+                    type="button"
+                    onClick={() => logWeight("mom", momKg)}
+                    disabled={busy || !momKg}
+                    className="rounded-full bg-primary/90 px-5 py-2 text-xs uppercase tracking-[0.25em] text-primary-foreground shadow-sm transition hover:bg-primary disabled:opacity-50"
+                  >
+                    Log mom
+                  </button>
+                )}
               </div>
               {renderSparkline(momSorted, "oklch(0.78 0.09 25)")}
             </div>
@@ -480,18 +490,21 @@ function WeightTracker() {
                     value={babyKg}
                     onChange={(e) => setBabyKg(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && logWeight("baby", babyKg)}
+                    disabled={!isAdmin}
                     placeholder={babySorted.length ? String(babySorted[babySorted.length - 1].value_kg) : "0.00"}
-                    className="mt-1 w-28 rounded-xl border border-border/60 bg-card/60 px-3 py-2 text-lg focus:outline-none focus:ring-2 focus:ring-primary/30"
+                    className="mt-1 w-28 rounded-xl border border-border/60 bg-card/60 px-3 py-2 text-lg focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-60"
                   />
                 </div>
-                <button
-                  type="button"
-                  onClick={() => logWeight("baby", babyKg)}
-                  disabled={busy || !babyKg}
-                  className="rounded-full bg-primary/90 px-5 py-2 text-xs uppercase tracking-[0.25em] text-primary-foreground shadow-sm transition hover:bg-primary disabled:opacity-50"
-                >
-                  Log baby
-                </button>
+                {isAdmin && (
+                  <button
+                    type="button"
+                    onClick={() => logWeight("baby", babyKg)}
+                    disabled={busy || !babyKg}
+                    className="rounded-full bg-primary/90 px-5 py-2 text-xs uppercase tracking-[0.25em] text-primary-foreground shadow-sm transition hover:bg-primary disabled:opacity-50"
+                  >
+                    Log baby
+                  </button>
+                )}
               </div>
               {renderSparkline(babySorted, "oklch(0.78 0.06 200)")}
             </div>
@@ -517,6 +530,7 @@ function MoodLogger() {
   const [mood, setMood] = useState(MOODS[0]);
   const [symptoms, setSymptoms] = useState("");
   const [note, setNote] = useState("");
+  const { isAdmin } = useAuth();
 
   const add = () => {
     if (!mood) return;
@@ -530,42 +544,50 @@ function MoodLogger() {
 
   return (
     <Card title="Mood & Symptoms" subtitle="A gentle daily check-in">
-      <div className="flex flex-wrap gap-2">
-        {MOODS.map((m) => (
+      {isAdmin ? (
+        <>
+          <div className="flex flex-wrap gap-2">
+            {MOODS.map((m) => (
+              <button
+                key={m}
+                type="button"
+                onClick={() => setMood(m)}
+                className={`rounded-full border px-3 py-1.5 text-sm transition ${
+                  mood === m
+                    ? "border-primary bg-primary/15 text-foreground"
+                    : "border-border/60 bg-card/60 text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {m}
+              </button>
+            ))}
+          </div>
+          <input
+            value={symptoms}
+            onChange={(e) => setSymptoms(e.target.value)}
+            placeholder="Symptoms (nausea, back ache, glowing...)"
+            className="mt-4 w-full rounded-xl border border-border/60 bg-card/60 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+          />
+          <textarea
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            placeholder="A little note for future us…"
+            rows={2}
+            className="mt-3 w-full resize-none rounded-xl border border-border/60 bg-card/60 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+          />
           <button
-            key={m}
             type="button"
-            onClick={() => setMood(m)}
-            className={`rounded-full border px-3 py-1.5 text-sm transition ${
-              mood === m
-                ? "border-primary bg-primary/15 text-foreground"
-                : "border-border/60 bg-card/60 text-muted-foreground hover:text-foreground"
-            }`}
+            onClick={add}
+            className="mt-3 rounded-full bg-primary/90 px-5 py-2 text-xs uppercase tracking-[0.25em] text-primary-foreground shadow-sm transition hover:bg-primary"
           >
-            {m}
+            Save entry
           </button>
-        ))}
-      </div>
-      <input
-        value={symptoms}
-        onChange={(e) => setSymptoms(e.target.value)}
-        placeholder="Symptoms (nausea, back ache, glowing...)"
-        className="mt-4 w-full rounded-xl border border-border/60 bg-card/60 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-      />
-      <textarea
-        value={note}
-        onChange={(e) => setNote(e.target.value)}
-        placeholder="A little note for future us…"
-        rows={2}
-        className="mt-3 w-full resize-none rounded-xl border border-border/60 bg-card/60 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-      />
-      <button
-        type="button"
-        onClick={add}
-        className="mt-3 rounded-full bg-primary/90 px-5 py-2 text-xs uppercase tracking-[0.25em] text-primary-foreground shadow-sm transition hover:bg-primary"
-      >
-        Save entry
-      </button>
+        </>
+      ) : (
+        <p className="rounded-xl border border-border/40 bg-card/40 px-3 py-4 text-center text-xs italic text-muted-foreground">
+          Sign in as admin to log moods and symptoms.
+        </p>
+      )}
 
       <AnimatePresence>
         {logs.length > 0 && (

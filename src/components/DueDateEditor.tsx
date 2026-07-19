@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useDueDate } from "@/lib/useDueDate";
+import { useAuth } from "@/lib/auth";
 
 export function DueDateEditor() {
   const { date, iso, setIso, defaultIso } = useDueDate();
   const [editing, setEditing] = useState(false);
+  const { isAdmin } = useAuth();
 
   const label = date.toLocaleDateString("en-US", {
     weekday: "long",
@@ -48,20 +50,24 @@ export function DueDateEditor() {
             </div>
           </motion.div>
         ) : (
-          <motion.button
+          <motion.div
             key="view"
-            type="button"
-            onClick={() => setEditing(true)}
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -6 }}
             className="group flex flex-col items-center"
           >
             <p className="font-display text-2xl italic text-foreground/80 sm:text-3xl">{label}</p>
-            <span className="mt-1 text-[10px] uppercase tracking-[0.3em] text-muted-foreground opacity-0 transition group-hover:opacity-100">
-              tap to edit · baby may come early
-            </span>
-          </motion.button>
+            {isAdmin && (
+              <button
+                type="button"
+                onClick={() => setEditing(true)}
+                className="mt-1 text-[10px] uppercase tracking-[0.3em] text-muted-foreground opacity-0 transition group-hover:opacity-100"
+              >
+                tap to edit · baby may come early
+              </button>
+            )}
+          </motion.div>
         )}
       </AnimatePresence>
     </div>

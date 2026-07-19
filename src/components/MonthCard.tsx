@@ -3,6 +3,7 @@ import { motion, AnimatePresence, type Variants } from "framer-motion";
 import { Calendar, Camera, ChevronDown, Heart, Sparkles, Trash2, Upload, Utensils, Video, X } from "lucide-react";
 import type { MonthEntry } from "@/lib/months";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/lib/auth";
 
 const fadeUp: Variants = {
   hidden: { opacity: 0, y: 30 },
@@ -38,6 +39,7 @@ function Slot({
   const [viewerOpen, setViewerOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const Icon = kind === "photo" ? Camera : Video;
+  const { isAdmin } = useAuth();
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -174,7 +176,7 @@ function Slot({
           </div>
         )}
 
-        {item && (
+        {item && isAdmin && (
           <div className="absolute inset-0 flex items-center justify-center gap-2 bg-black/40 opacity-0 transition group-hover:opacity-100">
             <button
               type="button"
@@ -241,26 +243,28 @@ function Slot({
                   playsInline
                 />
               )}
-              <div className="flex items-center justify-end gap-2 p-4">
-                <button
-                  type="button"
-                  onClick={() => {
-                    pickFile();
-                    setViewerOpen(false);
-                  }}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-border/60 px-3 py-1.5 text-[11px] uppercase tracking-[0.2em] text-muted-foreground transition hover:text-foreground"
-                >
-                  <Upload className="h-3.5 w-3.5" /> Replace
-                </button>
-                <button
-                  type="button"
-                  onClick={remove}
-                  disabled={busy}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-border/60 px-3 py-1.5 text-[11px] uppercase tracking-[0.2em] text-muted-foreground transition hover:border-destructive hover:text-destructive disabled:opacity-50"
-                >
-                  <Trash2 className="h-3.5 w-3.5" /> Remove
-                </button>
-              </div>
+              {isAdmin && (
+                <div className="flex items-center justify-end gap-2 p-4">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      pickFile();
+                      setViewerOpen(false);
+                    }}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-border/60 px-3 py-1.5 text-[11px] uppercase tracking-[0.2em] text-muted-foreground transition hover:text-foreground"
+                  >
+                    <Upload className="h-3.5 w-3.5" /> Replace
+                  </button>
+                  <button
+                    type="button"
+                    onClick={remove}
+                    disabled={busy}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-border/60 px-3 py-1.5 text-[11px] uppercase tracking-[0.2em] text-muted-foreground transition hover:border-destructive hover:text-destructive disabled:opacity-50"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" /> Remove
+                  </button>
+                </div>
+              )}
               <button
                 type="button"
                 onClick={() => setViewerOpen(false)}
@@ -454,5 +458,3 @@ function Section({
     </motion.div>
   );
 }
-
-
