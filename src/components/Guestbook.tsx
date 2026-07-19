@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Heart, Loader as Loader2, Send } from "lucide-react";
+import { Heart, Loader as Loader2, Send, Trash2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/lib/auth";
 
 type Entry = {
   id: string;
@@ -36,6 +37,68 @@ function timeAgo(iso: string) {
   return `${Math.floor(days / 365)}y ago`;
 }
 
+function DeleteDialog({
+  entry,
+  onConfirm,
+  onCancel,
+  busy,
+}: {
+  entry: Entry;
+  onConfirm: () => void;
+  onCancel: () => void;
+  busy: boolean;
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 backdrop-blur-sm"
+      onClick={onCancel}
+    >
+      <motion.div
+        initial={{ opacity: 0, scale: 0.94, y: 12 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.94, y: 12 }}
+        transition={{ duration: 0.2 }}
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-sm rounded-3xl border border-border/60 bg-card/95 p-6 shadow-xl backdrop-blur-md"
+      >
+        <h3 className="font-display text-xl text-foreground">Delete this entry?</h3>
+        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+          You are about to permanently delete{" "}
+          <span className="font-medium text-foreground">{entry.author_name}</span>'s message. This
+          cannot be undone.
+        </p>
+        <blockquote className="mt-3 rounded-xl border border-border/50 bg-secondary/30 px-4 py-2.5 text-sm italic text-foreground/70 line-clamp-3">
+          "{entry.message}"
+        </blockquote>
+        <div className="mt-5 flex justify-end gap-3">
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={busy}
+            className="rounded-full border border-border/60 bg-card/60 px-5 py-2 text-xs uppercase tracking-[0.2em] text-muted-foreground transition hover:text-foreground disabled:opacity-50"
+          >
+            Cancel
+          </button>
+          <motion.button
+            type="button"
+            onClick={onConfirm}
+            disabled={busy}
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
+            className="inline-flex items-center gap-2 rounded-full bg-destructive px-5 py-2 text-xs uppercase tracking-[0.2em] text-white shadow-sm transition disabled:opacity-50"
+          >
+            {busy ? <Loader2 className="h-3 w-3 animate-spin" /> : <Trash2 className="h-3 w-3" />}
+            Delete
+          </motion.button>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
 export function Guestbook() {
   const [entries, setEntries] = useState<Entry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -45,6 +108,11 @@ export function Guestbook() {
   const [relationship, setRelationship] = useState("");
   const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  const [pendingDelete, setPendingDelete] = useState<Entry | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const { isAdmin } = useAuth();
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -90,8 +158,36 @@ export function Guestbook() {
     setRelationship("");
   };
 
+  const confirmDelete = async () => {
+    if (!pendingDelete) return;
+    setDeleting(true);
+    const { error } = await supabase
+      .from("guestbook_entries")
+      .delete()
+      .eq("id", pendingDelete.id);
+    setDeleting(false);
+    if (error) {
+      setError(error.message);
+      setPendingDelete(null);
+      return;
+    }
+    setEntries((prev) => prev.filter((e) => e.id !== pendingDelete.id));
+    setPendingDelete(null);
+  };
+
   return (
     <section className="relative mx-auto max-w-5xl px-6 py-16">
+      <AnimatePresence>
+        {pendingDelete && (
+          <DeleteDialog
+            entry={pendingDelete}
+            onConfirm={confirmDelete}
+            onCancel={() => setPendingDelete(null)}
+            busy={deleting}
+          />
+        )}
+      </AnimatePresence>
+
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -193,8 +289,9 @@ export function Guestbook() {
                 layout
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.97, transition: { duration: 0.2 } }}
                 transition={{ duration: 0.5, delay: Math.min(i * 0.04, 0.4) }}
-                className="flex gap-4 rounded-3xl border border-border/60 bg-card/70 p-5 shadow-[var(--shadow-petal)] backdrop-blur-sm sm:p-6"
+                className="group flex gap-4 rounded-3xl border border-border/60 bg-card/70 p-5 shadow-[var(--shadow-petal)] backdrop-blur-sm sm:p-6"
               >
                 <div
                   className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full font-display text-sm text-white shadow-sm"
@@ -214,6 +311,18 @@ export function Guestbook() {
                     <span className="ml-auto text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
                       {timeAgo(e.created_at)}
                     </span>
+                    {isAdmin && (
+                      <motion.button
+                        type="button"
+                        onClick={() => setPendingDelete(e)}
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                        title="Delete entry"
+                        className="ml-2 rounded-full p-1 text-muted-foreground/40 opacity-0 transition hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </motion.button>
+                    )}
                   </div>
                   <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-foreground/80">
                     {e.message}
