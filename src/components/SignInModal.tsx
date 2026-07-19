@@ -2,6 +2,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Loader as Loader2, X } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { ALLOWED_EMAILS } from "@/lib/auth";
 
 export function SignInModal({
   open,
@@ -21,6 +22,11 @@ export function SignInModal({
     setBusy(true);
     setError(null);
     const trimmed = email.trim().toLowerCase();
+    if (!(ALLOWED_EMAILS as readonly string[]).includes(trimmed)) {
+      setBusy(false);
+      setError("This email is not invited. Sign-in is restricted to invited admins.");
+      return;
+    }
     const { data, error } =
       mode === "signin"
         ? await supabase.auth.signInWithPassword({ email: trimmed, password })
