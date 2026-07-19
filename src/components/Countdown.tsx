@@ -52,10 +52,10 @@ export function Countdown() {
   }, [date]);
 
   const items = [
-    { label: "weeks", value: t.weeks },
-    { label: "days", value: t.days % 7 },
+    { label: "days", value: t.days },
     { label: "hours", value: t.hours },
-    { label: "minutes", value: t.minutes },
+    { label: "mins", value: t.minutes },
+    { label: "seconds", value: t.seconds },
   ];
 
   return (
