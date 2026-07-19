@@ -2,7 +2,6 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Loader as Loader2, X } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import { ALLOWED_EMAILS } from "@/lib/auth";
 
 export function SignInModal({
   open,
@@ -132,10 +131,6 @@ export function SignInModal({
                 ? "Need an account? Sign up"
                 : "Already have an account? Sign in"}
             </button>
-
-            <p className="mt-4 text-center text-[10px] uppercase tracking-[0.2em] text-muted-foreground/70">
-              {ALLOWED_EMAILS.join(" · ")}
-            </p>
           </motion.div>
         </motion.div>
       )}
