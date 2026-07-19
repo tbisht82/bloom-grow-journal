@@ -1,13 +1,36 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
-  <circle cx="32" cy="32" r="30" fill="#fdf2f0"/>
-  <g transform="translate(32 32)">
-    <g fill="#e89a9a">
-      <ellipse cx="0" cy="-14" rx="7" ry="11"/>
-      <ellipse cx="0" cy="-14" rx="7" ry="11" transform="rotate(72)"/>
-      <ellipse cx="0" cy="-14" rx="7" ry="11" transform="rotate(144)"/>
-      <ellipse cx="0" cy="-14" rx="7" ry="11" transform="rotate(216)"/>
-      <ellipse cx="0" cy="-14" rx="7" ry="11" transform="rotate(288)"/>
-    </g>
-    <circle r="5" fill="#f4c869"/>
-  </g>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Background circle: warm cream -->
+  <circle cx="32" cy="32" r="32" fill="#fdf6ee"/>
+
+  <!-- Woman (right, magenta lehenga) -->
+  <!-- Head -->
+  <circle cx="37" cy="17" r="6.5" fill="#f9c8c8"/>
+  <!-- Hair bun / hair accessory suggestion -->
+  <circle cx="40.5" cy="12" r="2.2" fill="#1a1a1a"/>
+  <!-- Body / lehenga — flowing magenta shape -->
+  <path d="M28 26 Q31 23 37 23 Q43 23 44 26 L47 50 Q42 53 37 53 Q31 53 27 50 Z" fill="#e8194b"/>
+  <!-- Dupatta / drape accent -->
+  <path d="M43 24 Q47 28 48 36 Q46 38 44 36 Q43 30 40 26 Z" fill="#f04070" opacity="0.7"/>
+  <!-- Gold embroidery band at waist -->
+  <rect x="28.5" y="34" width="16" height="2.5" rx="1" fill="#d4a017" opacity="0.85"/>
+  <!-- Bangles hint on right wrist area -->
+  <circle cx="44" cy="38" r="1.5" fill="#d4a017" opacity="0.7"/>
+
+  <!-- Man (left, sage nehru jacket) -->
+  <!-- Head -->
+  <circle cx="21" cy="18" r="6" fill="#f0d5b8"/>
+  <!-- Glasses hint -->
+  <rect x="17.5" y="17" width="3.5" height="2" rx="1" fill="none" stroke="#333" stroke-width="0.8"/>
+  <rect x="21.5" y="17" width="3.5" height="2" rx="1" fill="none" stroke="#333" stroke-width="0.8"/>
+  <line x1="21" y1="18" x2="21.5" y2="18" stroke="#333" stroke-width="0.7"/>
+  <!-- Body / nehru jacket — sage green -->
+  <path d="M13 27 Q16 24 21 24 Q26 24 29 27 L30 50 Q25 52 21 52 Q16 52 12 50 Z" fill="#8aaa8a"/>
+  <!-- Kurta underneath (cream) -->
+  <path d="M15 27 Q17 25 21 25 Q25 25 27 27 L28 48 Q24 50 21 50 Q17 50 14 48 Z" fill="#f5f0e8"/>
+  <!-- Nehru jacket overlay -->
+  <path d="M13 28 Q15 26 18 26 L18 48 Q15 50 13 48 Z" fill="#8aaa8a"/>
+  <path d="M29 28 Q27 26 24 26 L24 48 Q27 50 29 48 Z" fill="#8aaa8a"/>
+
+  <!-- Subtle gold border ring -->
+  <circle cx="32" cy="32" r="31" fill="none" stroke="#d4a017" stroke-width="1.2" opacity="0.5"/>
 </svg>
