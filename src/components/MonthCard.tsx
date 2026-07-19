@@ -183,7 +183,7 @@ function Slot({
             />
           ) : (
             <video
-              src={mediaUrl(item.storage_path)}
+              src={`${mediaUrl(item.storage_path)}#t=0.1`}
               className="h-full w-full object-cover"
               muted={item.muted}
               playsInline
