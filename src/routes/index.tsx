@@ -7,7 +7,6 @@ import { DueDateEditor } from "@/components/DueDateEditor";
 import { Trackers } from "@/components/Trackers";
 import { Planning } from "@/components/Planning";
 import { DUE_DATE, PARENTS, months } from "@/lib/months";
-import heroFloral from "@/assets/hero-floral.jpg";
 import floralCorner from "@/assets/floral-corner.png";
 
 export const Route = createFileRoute("/")({
@@ -165,16 +164,6 @@ function Home() {
           </motion.p>
         </div>
 
-        <motion.img
-          src={heroFloral}
-          alt="Watercolor florals"
-          width={1600}
-          height={1200}
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 0.95, scale: 1 }}
-          transition={{ delay: 0.6, duration: 1.4, ease: "easeOut" }}
-          className="mx-auto mt-14 w-full max-w-3xl mix-blend-multiply"
-        />
       </motion.section>
 
       {/* Timeline intro */}
