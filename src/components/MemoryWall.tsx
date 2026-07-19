@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ImagePlus, Loader as Loader2, Sparkles, Trash2, X } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/lib/auth";
 
 type Photo = {
   id: string;
@@ -43,6 +44,7 @@ export function MemoryWall() {
 
   const [active, setActive] = useState<Photo | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { isAdmin } = useAuth();
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -136,81 +138,83 @@ export function MemoryWall() {
         </p>
       </motion.div>
 
-      <motion.form
-        onSubmit={upload}
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.7 }}
-        className="rounded-3xl border border-border/60 bg-card/70 p-6 shadow-[var(--shadow-petal)] backdrop-blur-sm sm:p-8"
-      >
-        <div className="grid gap-4 sm:grid-cols-[auto_1fr]">
-          <button
-            type="button"
-            onClick={pickFile}
-            className="group flex aspect-square w-28 items-center justify-center rounded-2xl border-2 border-dashed border-border bg-card/40 text-muted-foreground transition hover:border-primary hover:text-primary"
-          >
-            {preview ? (
-              <img
-                src={preview}
-                alt="Selected preview"
-                className="h-full w-full rounded-xl object-cover"
-              />
-            ) : (
-              <ImagePlus className="h-6 w-6" />
-            )}
-          </button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-          />
-          <div className="flex flex-col gap-3">
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Your name"
-              required
-              maxLength={60}
-              className="w-full rounded-xl border border-border/60 bg-card/60 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-            />
-            <input
-              value={caption}
-              onChange={(e) => setCaption(e.target.value)}
-              placeholder="Caption (optional) — 'first kick', 'nursery nook'…"
-              maxLength={120}
-              className="w-full rounded-xl border border-border/60 bg-card/60 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-            />
-            <div className="mt-auto flex items-center gap-3">
-              <motion.button
-                type="submit"
-                disabled={uploading || !file || !name.trim()}
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-                className="inline-flex items-center gap-2 rounded-full bg-gradient-to-br from-primary to-accent px-6 py-2.5 text-xs uppercase tracking-[0.25em] text-primary-foreground shadow-[var(--shadow-petal)] transition disabled:opacity-50"
-              >
-                {uploading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Sparkles className="h-4 w-4" />
-                )}
-                Add memory
-              </motion.button>
-              {file && (
-                <button
-                  type="button"
-                  onClick={() => setFile(null)}
-                  className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground"
-                >
-                  Clear
-                </button>
+      {isAdmin && (
+        <motion.form
+          onSubmit={upload}
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.7 }}
+          className="rounded-3xl border border-border/60 bg-card/70 p-6 shadow-[var(--shadow-petal)] backdrop-blur-sm sm:p-8"
+        >
+          <div className="grid gap-4 sm:grid-cols-[auto_1fr]">
+            <button
+              type="button"
+              onClick={pickFile}
+              className="group flex aspect-square w-28 items-center justify-center rounded-2xl border-2 border-dashed border-border bg-card/40 text-muted-foreground transition hover:border-primary hover:text-primary"
+            >
+              {preview ? (
+                <img
+                  src={preview}
+                  alt="Selected preview"
+                  className="h-full w-full rounded-xl object-cover"
+                />
+              ) : (
+                <ImagePlus className="h-6 w-6" />
               )}
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+            />
+            <div className="flex flex-col gap-3">
+              <input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Your name"
+                required
+                maxLength={60}
+                className="w-full rounded-xl border border-border/60 bg-card/60 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+              />
+              <input
+                value={caption}
+                onChange={(e) => setCaption(e.target.value)}
+                placeholder="Caption (optional) — 'first kick', 'nursery nook'…"
+                maxLength={120}
+                className="w-full rounded-xl border border-border/60 bg-card/60 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+              />
+              <div className="mt-auto flex items-center gap-3">
+                <motion.button
+                  type="submit"
+                  disabled={uploading || !file || !name.trim()}
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  className="inline-flex items-center gap-2 rounded-full bg-gradient-to-br from-primary to-accent px-6 py-2.5 text-xs uppercase tracking-[0.25em] text-primary-foreground shadow-[var(--shadow-petal)] transition disabled:opacity-50"
+                >
+                  {uploading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Sparkles className="h-4 w-4" />
+                  )}
+                  Add memory
+                </motion.button>
+                {file && (
+                  <button
+                    type="button"
+                    onClick={() => setFile(null)}
+                    className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      </motion.form>
+        </motion.form>
+      )}
 
       {error && (
         <p className="mx-auto mt-4 max-w-xl rounded-xl bg-destructive/10 px-4 py-2 text-center text-sm text-destructive">
@@ -308,14 +312,16 @@ export function MemoryWall() {
                   </p>
                 </div>
                 <div className="flex shrink-0 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => remove(active)}
-                    className="inline-flex items-center gap-1.5 rounded-full border border-border/60 px-3 py-1.5 text-[11px] uppercase tracking-[0.2em] text-muted-foreground transition hover:border-destructive hover:text-destructive"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                    Remove
-                  </button>
+                  {isAdmin && (
+                    <button
+                      type="button"
+                      onClick={() => remove(active)}
+                      className="inline-flex items-center gap-1.5 rounded-full border border-border/60 px-3 py-1.5 text-[11px] uppercase tracking-[0.2em] text-muted-foreground transition hover:border-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                      Remove
+                    </button>
+                  )}
                 </div>
               </div>
               <button

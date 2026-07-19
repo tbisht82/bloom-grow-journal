@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocalState } from "@/lib/useLocalState";
+import { useAuth } from "@/lib/auth";
 
 type Appt = { id: string; date: string; label: string };
 
@@ -38,13 +39,15 @@ function BirthPlan() {
     "journal.birthPlan",
     "Soft lights, gentle music, our people close by. Skin-to-skin as soon as possible."
   );
+  const { isAdmin } = useAuth();
   return (
     <Card title="Birth Plan" subtitle="How we'd love this day to feel">
       <textarea
         value={plan}
         onChange={(e) => setPlan(e.target.value)}
         rows={6}
-        className="w-full resize-none rounded-2xl border border-border/60 bg-card/60 p-4 font-display text-lg italic leading-relaxed text-foreground/90 focus:outline-none focus:ring-2 focus:ring-primary/30"
+        disabled={!isAdmin}
+        className="w-full resize-none rounded-2xl border border-border/60 bg-card/60 p-4 font-display text-lg italic leading-relaxed text-foreground/90 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:cursor-default disabled:opacity-90"
       />
       <p className="mt-2 text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
         Autosaved to this device
@@ -57,6 +60,7 @@ function Appointments() {
   const [items, setItems] = useLocalState<Appt[]>("journal.appts", []);
   const [date, setDate] = useState("");
   const [label, setLabel] = useState("");
+  const { isAdmin } = useAuth();
 
   const add = () => {
     if (!date || !label.trim()) return;
@@ -79,27 +83,29 @@ function Appointments() {
 
   return (
     <Card title="Doctor Appointments" subtitle="Little dates on the calendar">
-      <div className="flex flex-col gap-2 sm:flex-row">
-        <input
-          type="date"
-          value={date}
-          onChange={(e) => setDate(e.target.value)}
-          className="rounded-xl border border-border/60 bg-card/60 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-        />
-        <input
-          value={label}
-          onChange={(e) => setLabel(e.target.value)}
-          placeholder="Anomaly scan, glucose test…"
-          className="flex-1 rounded-xl border border-border/60 bg-card/60 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-        />
-        <button
-          type="button"
-          onClick={add}
-          className="rounded-full bg-primary/90 px-5 py-2 text-xs uppercase tracking-[0.25em] text-primary-foreground shadow-sm transition hover:bg-primary"
-        >
-          Add
-        </button>
-      </div>
+      {isAdmin && (
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <input
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            className="rounded-xl border border-border/60 bg-card/60 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+          />
+          <input
+            value={label}
+            onChange={(e) => setLabel(e.target.value)}
+            placeholder="Anomaly scan, glucose test…"
+            className="flex-1 rounded-xl border border-border/60 bg-card/60 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+          />
+          <button
+            type="button"
+            onClick={add}
+            className="rounded-full bg-primary/90 px-5 py-2 text-xs uppercase tracking-[0.25em] text-primary-foreground shadow-sm transition hover:bg-primary"
+          >
+            Add
+          </button>
+        </div>
+      )}
 
       {upcoming.length > 0 && (
         <>
@@ -119,13 +125,15 @@ function Appointments() {
                   <div className="font-display text-lg text-primary">{fmt(x.date)}</div>
                 </div>
                 <div className="flex-1 text-sm text-foreground">{x.label}</div>
-                <button
-                  type="button"
-                  onClick={() => remove(x.id)}
-                  className="text-xs text-muted-foreground hover:text-destructive"
-                >
-                  ×
-                </button>
+                {isAdmin && (
+                  <button
+                    type="button"
+                    onClick={() => remove(x.id)}
+                    className="text-xs text-muted-foreground hover:text-destructive"
+                  >
+                    ×
+                  </button>
+                )}
               </motion.li>
             ))}
           </ul>
@@ -144,13 +152,15 @@ function Appointments() {
               >
                 <span className="font-display">{fmt(x.date)}</span>
                 <span>· {x.label}</span>
-                <button
-                  type="button"
-                  onClick={() => remove(x.id)}
-                  className="ml-auto text-xs hover:text-destructive"
-                >
-                  ×
-                </button>
+                {isAdmin && (
+                  <button
+                    type="button"
+                    onClick={() => remove(x.id)}
+                    className="ml-auto text-xs hover:text-destructive"
+                  >
+                    ×
+                  </button>
+                )}
               </li>
             ))}
           </ul>
