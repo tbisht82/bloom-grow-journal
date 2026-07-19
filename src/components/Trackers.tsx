@@ -585,7 +585,7 @@ function MoodLogger() {
         </>
       ) : (
         <p className="rounded-xl border border-border/40 bg-card/40 px-3 py-4 text-center text-xs italic text-muted-foreground">
-          Sign in as admin to log moods and symptoms.
+          Mama is busy preparing hospital Bag
         </p>
       )}
 
