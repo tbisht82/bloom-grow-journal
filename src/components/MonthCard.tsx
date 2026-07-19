@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence, type Variants } from "framer-motion";
-import { Calendar, Camera, ChevronDown, Heart, Sparkles, Trash2, Upload, Utensils, Video, X } from "lucide-react";
+import { Calendar, Camera, ChevronDown, Heart, Sparkles, Trash2, Upload, Utensils, Video, Volume2, VolumeX, X } from "lucide-react";
 import type { MonthEntry } from "@/lib/months";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
@@ -14,6 +14,7 @@ type MediaItem = {
   id: string;
   kind: "photo" | "video";
   storage_path: string;
+  muted: boolean;
 };
 
 const BUCKET = "month_media";
@@ -37,6 +38,8 @@ function Slot({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [viewerOpen, setViewerOpen] = useState(false);
+  const [pendingVideo, setPendingVideo] = useState<File | null>(null);
+  const [includeAudio, setIncludeAudio] = useState(true);
   const inputRef = useRef<HTMLInputElement>(null);
   const Icon = kind === "photo" ? Camera : Video;
   const { isAdmin } = useAuth();
@@ -45,7 +48,7 @@ function Slot({
     setLoading(true);
     const { data, error } = await supabase
       .from("month_media")
-      .select("id, kind, storage_path")
+      .select("id, kind, storage_path, muted")
       .eq("month", month)
       .eq("slot", slot)
       .maybeSingle();
@@ -68,7 +71,17 @@ function Slot({
 
   const onFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    e.target.value = "";
     if (!file) return;
+    if (file.type.startsWith("video/")) {
+      setIncludeAudio(true);
+      setPendingVideo(file);
+      return;
+    }
+    await uploadFile(file, true);
+  };
+
+  const uploadFile = async (file: File, withAudio: boolean) => {
     setBusy(true);
     setError(null);
 
@@ -87,19 +100,19 @@ function Slot({
     if (upErr) {
       setError(upErr.message);
       setBusy(false);
-      e.target.value = "";
       return;
     }
+
+    const muted = isVideo ? !withAudio : false;
 
     if (item) {
       const { data, error: upErr2 } = await supabase
         .from("month_media")
-        .update({ kind: detectedKind, storage_path: path })
+        .update({ kind: detectedKind, storage_path: path, muted })
         .eq("id", item.id)
-        .select("id, kind, storage_path")
+        .select("id, kind, storage_path, muted")
         .maybeSingle();
       setBusy(false);
-      e.target.value = "";
       if (upErr2 || !data) {
         setError(upErr2?.message ?? "File uploaded but row update failed.");
         return;
@@ -108,17 +121,23 @@ function Slot({
     } else {
       const { data, error: insErr } = await supabase
         .from("month_media")
-        .insert({ month, slot, kind: detectedKind, storage_path: path })
-        .select("id, kind, storage_path")
+        .insert({ month, slot, kind: detectedKind, storage_path: path, muted })
+        .select("id, kind, storage_path, muted")
         .maybeSingle();
       setBusy(false);
-      e.target.value = "";
       if (insErr || !data) {
         setError(insErr?.message ?? "File uploaded but insert failed.");
         return;
       }
       setItem(data as MediaItem);
     }
+  };
+
+  const confirmVideo = () => {
+    if (!pendingVideo) return;
+    const file = pendingVideo;
+    setPendingVideo(null);
+    void uploadFile(file, includeAudio);
   };
 
   const remove = async () => {
@@ -166,7 +185,7 @@ function Slot({
             <video
               src={mediaUrl(item.storage_path)}
               className="h-full w-full object-cover"
-              muted
+              muted={item.muted}
               playsInline
               preload="metadata"
             />
@@ -251,6 +270,7 @@ function Slot({
                   className="max-h-[78vh] w-full object-contain"
                   controls
                   autoPlay
+                  muted={item.muted}
                   playsInline
                 />
               )}
@@ -294,6 +314,82 @@ function Slot({
           {error}
         </p>
       )}
+
+      <AnimatePresence>
+        {pendingVideo && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 backdrop-blur-sm"
+            onClick={() => setPendingVideo(null)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.94, y: 12 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.94, y: 12 }}
+              transition={{ duration: 0.2 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-sm rounded-3xl border border-border/60 bg-card/95 p-6 shadow-xl backdrop-blur-md"
+            >
+              <h3 className="font-display text-xl text-foreground">Upload video</h3>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                {pendingVideo.name}
+              </p>
+              <button
+                type="button"
+                onClick={() => setIncludeAudio((v) => !v)}
+                className="mt-4 flex w-full items-center justify-between rounded-xl border border-border/60 bg-card/60 px-4 py-3 text-sm transition hover:border-primary/50"
+              >
+                <span className="flex items-center gap-2 text-foreground">
+                  {includeAudio ? (
+                    <Volume2 className="h-4 w-4 text-primary" />
+                  ) : (
+                    <VolumeX className="h-4 w-4 text-muted-foreground" />
+                  )}
+                  Include audio
+                </span>
+                <span
+                  className={`relative h-5 w-9 rounded-full transition ${
+                    includeAudio ? "bg-primary" : "bg-muted-foreground/30"
+                  }`}
+                >
+                  <span
+                    className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-all ${
+                      includeAudio ? "left-4" : "left-0.5"
+                    }`}
+                  />
+                </span>
+              </button>
+              <div className="mt-5 flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setPendingVideo(null)}
+                  disabled={busy}
+                  className="rounded-full border border-border/60 bg-card/60 px-5 py-2 text-xs uppercase tracking-[0.2em] text-muted-foreground transition hover:text-foreground disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <motion.button
+                  type="button"
+                  onClick={confirmVideo}
+                  disabled={busy}
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2 text-xs uppercase tracking-[0.2em] text-primary-foreground shadow-sm transition disabled:opacity-50"
+                >
+                  {busy ? (
+                    <div className="h-3 w-3 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+                  ) : (
+                    <Upload className="h-3 w-3" />
+                  )}
+                  Upload
+                </motion.button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
