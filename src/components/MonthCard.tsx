@@ -396,7 +396,7 @@ function Slot({
 
 export function MonthCard({ entry, index }: { entry: MonthEntry; index: number }) {
   const flipped = index % 2 === 1;
-  const [open, setOpen] = useState(index === 0);
+  const [open, setOpen] = useState(false);
 
   return (
     <motion.article
@@ -478,14 +478,64 @@ export function MonthCard({ entry, index }: { entry: MonthEntry; index: number }
             </motion.span>
           </button>
 
+          {/* Always visible on desktop; toggled on mobile */}
+          <div className="hidden md:block space-y-4">
+            <Section icon={<Sparkles className="h-4 w-4" />} title="Milestones">
+              <ul className="space-y-1.5">
+                {entry.milestones.map((m, i) => (
+                  <motion.li
+                    key={m}
+                    initial={{ opacity: 0, x: -10 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: i * 0.08 }}
+                    className="flex gap-2 text-sm text-foreground/80"
+                  >
+                    <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+                    {m}
+                  </motion.li>
+                ))}
+              </ul>
+            </Section>
+
+            <Section icon={<Calendar className="h-4 w-4" />} title="Appointments">
+              <ul className="space-y-1.5">
+                {entry.appointments.map((a) => (
+                  <li
+                    key={a.label}
+                    className="flex items-baseline justify-between gap-4 text-sm text-foreground/80"
+                  >
+                    <span>{a.label}</span>
+                    <span className="font-display text-primary">{a.date}</span>
+                  </li>
+                ))}
+              </ul>
+            </Section>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Section icon={<Utensils className="h-4 w-4" />} title="Cravings">
+                <ul className="space-y-1 text-sm text-foreground/80">
+                  {entry.cravings.map((c) => (
+                    <li key={c}>· {c}</li>
+                  ))}
+                </ul>
+              </Section>
+              <Section icon={<Heart className="h-4 w-4" />} title="Memory">
+                <p className="text-sm italic leading-relaxed text-foreground/80">
+                  {entry.memories}
+                </p>
+              </Section>
+            </div>
+          </div>
+
           <AnimatePresence initial={false}>
-            {(open || typeof window === "undefined") && (
+            {open && (
               <motion.div
                 initial={{ height: 0, opacity: 0 }}
                 animate={{ height: "auto", opacity: 1 }}
                 exit={{ height: 0, opacity: 0 }}
                 transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-                className="space-y-4 overflow-hidden md:!h-auto md:!opacity-100"
+                className="space-y-4 overflow-hidden md:hidden"
               >
                 <Section icon={<Sparkles className="h-4 w-4" />} title="Milestones">
                   <ul className="space-y-1.5">
