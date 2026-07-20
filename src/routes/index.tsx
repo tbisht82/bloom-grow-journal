@@ -109,7 +109,11 @@ function Home() {
             delay: i * 2.2,
             ease: "linear",
           }}
-          className="pointer-events-none absolute top-0 h-3 w-3 rounded-full bg-gradient-to-br from-[oklch(0.9_0.06_25)] to-[oklch(0.85_0.08_20)] shadow-sm"
+          className={`pointer-events-none absolute top-0 h-3 w-3 rounded-full shadow-sm ${
+            i % 2 === 0
+              ? "bg-gradient-to-br from-[oklch(0.9_0.05_240)] to-[oklch(0.82_0.07_240)]"
+              : "bg-gradient-to-br from-[oklch(0.9_0.06_25)] to-[oklch(0.85_0.08_15)]"
+          }`}
         />
       ))}
 
