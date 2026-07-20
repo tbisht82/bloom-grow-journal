@@ -75,7 +75,7 @@ export const months: MonthEntry[] = [
     sizeEmoji: "🍌",
     notes:
       "We felt you move for the first time — a little flicker like a butterfly saying hello.",
-    milestones: ["Anatomy scan", "Learned the gender 💗", "First kick felt by Tilak"],
+    milestones: ["Anatomy scan", "First kick felt by Tilak"],
     appointments: [{ date: "Week 20", label: "Anatomy ultrasound" }],
     cravings: ["Chocolate milkshakes", "Salted popcorn"],
     memories: "We wrote your name down on paper for the first time. It's real.",
